@@ -64,6 +64,5 @@ The extension bundle compiles to `dist/extension.js` and can be loaded directly 
 
 ## Author
 - Developed by: Ashish Kumar Mahto
-- Location: Ranchi, Jharkhand, India
 - Repository: [https://github.com/Ashish-Akm/Antigravity_accept-rejectButtons](https://github.com/Ashish-Akm/Antigravity_accept-rejectButtons)
 - License: MIT
