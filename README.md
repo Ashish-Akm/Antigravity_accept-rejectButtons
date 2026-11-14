@@ -1,6 +1,6 @@
 # Antigravity Accept & Reject Floating Buttons
 
-A clean, minimalist floating review capsule bar for **Google Antigravity IDE** and **VS Code**. Restores the iconic floating review toolbar (`Accept Changes ⌘↩` · `Reject ⌘⌫` · `↑ ⌥K` · `↓ ⌥J` · `< Edited files X/Y >`) with keyboard shortcuts and multi-file navigation.
+A clean, minimalist floating review capsule bar for **Google Antigravity IDE** and **VS Code**. Restores the iconic floating review toolbar (`Accept Changes ⌘↩` · `Reject ⌘⌫` · `↑ ⌥K` · `↓ ⌥J` · `< Edited files X/Y >` · `Send to Agent`) with keyboard shortcuts and multi-file navigation.
 
 ![Antigravity Floating Diff Reviewer Preview](https://raw.githubusercontent.com/Ashish-Akm/Antigravity_accept-rejectButtons/main/images/preview.png)
 
@@ -14,6 +14,7 @@ A clean, minimalist floating review capsule bar for **Google Antigravity IDE** a
 - **Previous Hunk (`⌥K` / `Alt+K`)**: Jumps smoothly to the previous diff hunk in the active editor.
 - **Next Hunk (`⌥J` / `Alt+J`)**: Jumps smoothly to the next diff hunk in the active editor.
 - **File Navigation (`< Edited files X/Y >`)**: Rapidly cycle across all modified files in the workspace.
+- **Send to Agent (`@current_problems`)**: One-click diagnostics bridge that collects all active workspace errors and pre-fills them in the Agent Chat panel without needing screenshots.
 - **Zero Distraction**: Auto-hides when working in clean workspaces with no pending diffs.
 - **Dual Mode**: Interoperates with Antigravity Agent internal commands, inline diffs, and standard Git diff workflows.
 
