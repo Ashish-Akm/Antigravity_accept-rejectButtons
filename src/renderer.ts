@@ -1,5 +1,6 @@
 // Antigravity IDE - In-Editor Floating Review Capsule Bar
-// Docks seamlessly into active Monaco code editor viewport
+// Docks directly into the active Monaco code editor viewport (above bottom terminal panel)
+// 100% Trusted Types safe - pure DOM creation without innerHTML
 
 (function () {
     if ((window as any).__antigravityFloatingBarLoaded) {
@@ -7,87 +8,263 @@
     }
     (window as any).__antigravityFloatingBarLoaded = true;
 
+    console.log('[Antigravity Floating Bar] Initializing floating capsule review bar...');
+
     const SERVER_URL = 'http://127.0.0.1:48765';
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const acceptShortcut = isMac ? '⌘↩' : 'Ctrl+Enter';
     const rejectShortcut = isMac ? '⌘⌫' : 'Ctrl+Backspace';
     const prevHunkShortcut = isMac ? '⌥K' : 'Alt+K';
     const nextHunkShortcut = isMac ? '⌥J' : 'Alt+J';
 
-    // Inject custom container styling to guarantee floating bottom alignment
+    // Inject high-visibility capsule styling
     const styleEl = document.createElement('style');
     styleEl.id = 'antigravity-floating-bar-style';
     styleEl.textContent = `
         .antigravity-capsule-root {
             position: absolute !important;
-            bottom: 16px !important;
+            bottom: 24px !important;
             left: 50% !important;
             transform: translateX(-50%) !important;
-            z-index: 2500 !important;
+            z-index: 99999 !important;
             display: flex !important;
+            align-items: center !important;
             pointer-events: auto !important;
             user-select: none !important;
-            transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+            font-size: 12px !important;
+            line-height: 1.4 !important;
+            transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
         }
         .antigravity-capsule-root.hidden-bar {
-            opacity: 0 !important;
-            pointer-events: none !important;
-            transform: translateX(-50%) translateY(8px) !important;
+            display: none !important;
         }
-        .antigravity-capsule-root .cascade-bar button:active {
-            transform: scale(0.97);
-            transition: transform 0.08s ease;
+        .antigravity-capsule-root .bar-mode {
+            display: flex !important;
+            align-items: center !important;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.16) !important;
+            border: 0.5px solid rgba(255, 255, 255, 0.2) !important;
+            color: #d4d4d4 !important;
+            background-color: #1e1e1e !important;
+            border-radius: 8px !important;
+            padding: 3px 6px !important;
+            gap: 4px !important;
+        }
+        .antigravity-capsule-root .resolve-changes {
+            display: flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            padding-right: 6px !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.16) !important;
+        }
+        .antigravity-capsule-root button {
+            cursor: pointer !important;
+            font-family: inherit !important;
+            font-size: 11px !important;
+            border: 0 !important;
+            border-radius: 4px !important;
+            padding: 3px 8px !important;
+            outline: none !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            white-space: nowrap !important;
+            transition: transform 0.08s ease, background-color 0.12s ease !important;
+        }
+        .antigravity-capsule-root button:active {
+            transform: scale(0.96) !important;
+        }
+        .antigravity-capsule-root button.primary {
+            background-color: #0078d4 !important;
+            color: #ffffff !important;
+            font-weight: 500 !important;
+        }
+        .antigravity-capsule-root button.primary:hover {
+            background-color: #106ebe !important;
+        }
+        .antigravity-capsule-root button.secondary {
+            background-color: transparent !important;
+            color: #cccccc !important;
+        }
+        .antigravity-capsule-root button.secondary:hover {
+            background-color: rgba(255, 255, 255, 0.12) !important;
+        }
+        .antigravity-capsule-root .shortcut {
+            opacity: 0.7 !important;
+            font-size: 10px !important;
+            margin-left: 2px !important;
+        }
+        .antigravity-capsule-root .hunk-nav {
+            display: flex !important;
+            align-items: center !important;
+            gap: 2px !important;
+            padding: 0 4px !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.16) !important;
+        }
+        .antigravity-capsule-root .file-nav-section {
+            display: flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            padding-left: 4px !important;
+        }
+        .antigravity-capsule-root .file-nav-section.hidden {
+            display: none !important;
+        }
+        .antigravity-capsule-root .file-nav-display-text {
+            font-size: 11px !important;
+            color: #9cdcfe !important;
+            padding: 0 4px !important;
+            white-space: nowrap !important;
         }
     `;
-    document.head.appendChild(styleEl);
+    if (document.head) {
+        document.head.appendChild(styleEl);
+    } else {
+        document.addEventListener('DOMContentLoaded', () => document.head.appendChild(styleEl));
+    }
 
-    // Create the floating capsule element matching Antigravity native classes
+    // Build the capsule DOM structure (100% Trusted Types safe - ZERO innerHTML)
     const capsuleEl = document.createElement('div');
-    capsuleEl.className = 'antigravity-capsule-root hidden-bar';
+    capsuleEl.className = 'antigravity-capsule-root';
     capsuleEl.id = 'antigravity-floating-capsule';
-    capsuleEl.innerHTML = `
-        <div class="cascade-bar">
-            <div class="file-with-diff bar-mode">
-                <div class="resolve-changes">
-                    <button class="keep-changes primary" id="antigravity-btn-accept" title="Accept Changes (${acceptShortcut})">
-                        <span>Accept Changes</span>
-                        <span class="shortcut">${acceptShortcut}</span>
-                    </button>
-                    <button class="discard-changes secondary" id="antigravity-btn-reject" title="Reject (${rejectShortcut})">
-                        <span>Reject</span>
-                        <span class="shortcut">${rejectShortcut}</span>
-                    </button>
-                </div>
-                <div class="hunk-nav" id="antigravity-hunk-nav">
-                    <button class="previous-hunk secondary" id="antigravity-btn-prev-hunk" title="Previous Change (${prevHunkShortcut})">
-                        <span class="codicon codicon-arrow-up"></span>
-                        <span class="shortcut">${prevHunkShortcut}</span>
-                    </button>
-                    <button class="next-hunk secondary" id="antigravity-btn-next-hunk" title="Next Change (${nextHunkShortcut})">
-                        <span class="codicon codicon-arrow-down"></span>
-                        <span class="shortcut">${nextHunkShortcut}</span>
-                    </button>
-                </div>
-                <div class="file-nav-section" id="antigravity-file-nav">
-                    <button class="prev-file secondary codicon codicon-chevron-left" id="antigravity-btn-prev-file" title="Previous File"></button>
-                    <div class="file-nav-display-text" id="antigravity-files-text">Edited files 1/1</div>
-                    <button class="next-file secondary codicon codicon-chevron-right" id="antigravity-btn-next-file" title="Next File"></button>
-                </div>
-            </div>
-        </div>
-    `;
 
-    // Fast helper to send actions to extension host
+    const cascadeBar = document.createElement('div');
+    cascadeBar.className = 'cascade-bar';
+
+    const fileWithDiff = document.createElement('div');
+    fileWithDiff.className = 'file-with-diff bar-mode';
+
+    // 1. Resolve changes section (Accept / Reject)
+    const resolveChanges = document.createElement('div');
+    resolveChanges.className = 'resolve-changes';
+
+    const btnAccept = document.createElement('button');
+    btnAccept.className = 'keep-changes primary';
+    btnAccept.id = 'antigravity-btn-accept';
+    btnAccept.title = `Accept Changes (${acceptShortcut})`;
+
+    const acceptText = document.createElement('span');
+    acceptText.textContent = 'Accept Changes';
+    const acceptShortcutSpan = document.createElement('span');
+    acceptShortcutSpan.className = 'shortcut';
+    acceptShortcutSpan.textContent = acceptShortcut;
+
+    btnAccept.appendChild(acceptText);
+    btnAccept.appendChild(acceptShortcutSpan);
+
+    const btnReject = document.createElement('button');
+    btnReject.className = 'discard-changes secondary';
+    btnReject.id = 'antigravity-btn-reject';
+    btnReject.title = `Reject (${rejectShortcut})`;
+
+    const rejectText = document.createElement('span');
+    rejectText.textContent = 'Reject';
+    const rejectShortcutSpan = document.createElement('span');
+    rejectShortcutSpan.className = 'shortcut';
+    rejectShortcutSpan.textContent = rejectShortcut;
+
+    btnReject.appendChild(rejectText);
+    btnReject.appendChild(rejectShortcutSpan);
+
+    resolveChanges.appendChild(btnAccept);
+    resolveChanges.appendChild(btnReject);
+    fileWithDiff.appendChild(resolveChanges);
+
+    // 2. Hunk navigation section (↑ / ↓)
+    const hunkNav = document.createElement('div');
+    hunkNav.className = 'hunk-nav';
+    hunkNav.id = 'antigravity-hunk-nav';
+
+    const btnPrevHunk = document.createElement('button');
+    btnPrevHunk.className = 'previous-hunk secondary';
+    btnPrevHunk.id = 'antigravity-btn-prev-hunk';
+    btnPrevHunk.title = `Previous Change (${prevHunkShortcut})`;
+    const prevHunkArrow = document.createElement('span');
+    prevHunkArrow.textContent = '↑';
+    const prevHunkShortcutSpan = document.createElement('span');
+    prevHunkShortcutSpan.className = 'shortcut';
+    prevHunkShortcutSpan.textContent = prevHunkShortcut;
+    btnPrevHunk.appendChild(prevHunkArrow);
+    btnPrevHunk.appendChild(prevHunkShortcutSpan);
+
+    const btnNextHunk = document.createElement('button');
+    btnNextHunk.className = 'next-hunk secondary';
+    btnNextHunk.id = 'antigravity-btn-next-hunk';
+    btnNextHunk.title = `Next Change (${nextHunkShortcut})`;
+    const nextHunkArrow = document.createElement('span');
+    nextHunkArrow.textContent = '↓';
+    const nextHunkShortcutSpan = document.createElement('span');
+    nextHunkShortcutSpan.className = 'shortcut';
+    nextHunkShortcutSpan.textContent = nextHunkShortcut;
+    btnNextHunk.appendChild(nextHunkArrow);
+    btnNextHunk.appendChild(nextHunkShortcutSpan);
+
+    hunkNav.appendChild(btnPrevHunk);
+    hunkNav.appendChild(btnNextHunk);
+    fileWithDiff.appendChild(hunkNav);
+
+    // 3. Multi-file navigation section (< Edited files X/Y >)
+    const fileNavSection = document.createElement('div');
+    fileNavSection.className = 'file-nav-section';
+    fileNavSection.id = 'antigravity-file-nav';
+
+    const btnPrevFile = document.createElement('button');
+    btnPrevFile.className = 'prev-file secondary';
+    btnPrevFile.id = 'antigravity-btn-prev-file';
+    btnPrevFile.title = 'Previous File';
+    btnPrevFile.textContent = '<';
+
+    const textFiles = document.createElement('div');
+    textFiles.className = 'file-nav-display-text';
+    textFiles.id = 'antigravity-files-text';
+    textFiles.textContent = 'Edited files 1/1';
+
+    const btnNextFile = document.createElement('button');
+    btnNextFile.className = 'next-file secondary';
+    btnNextFile.id = 'antigravity-btn-next-file';
+    btnNextFile.title = 'Next File';
+    btnNextFile.textContent = '>';
+
+    fileNavSection.appendChild(btnPrevFile);
+    fileNavSection.appendChild(textFiles);
+    fileNavSection.appendChild(btnNextFile);
+    fileWithDiff.appendChild(fileNavSection);
+
+    cascadeBar.appendChild(fileWithDiff);
+    capsuleEl.appendChild(cascadeBar);
+
+    // Fast helper to send actions to extension host and editor
     async function sendAction(action: string) {
         try {
-            await fetch(`${SERVER_URL}/action`, {
+            fetch(`${SERVER_URL}/action`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action })
-            });
-        } catch (e) {
-            // Graceful fallback: dispatch keyboard shortcut into editor textarea
-            dispatchEditorKey(action);
+            }).catch(() => {});
+        } catch {}
+
+        if (action === 'accept') {
+            clickCodeLens('Accept');
+            dispatchEditorKey('accept');
+        } else if (action === 'reject') {
+            clickCodeLens('Reject');
+            dispatchEditorKey('reject');
+        } else if (action === 'previousHunk') {
+            dispatchEditorKey('previousHunk');
+        } else if (action === 'nextHunk') {
+            dispatchEditorKey('nextHunk');
+        }
+    }
+
+    function clickCodeLens(actionType: 'Accept' | 'Reject') {
+        const lenses = document.querySelectorAll('.codelens-decoration');
+        for (let i = 0; i < lenses.length; i++) {
+            const el = lenses[i] as HTMLElement;
+            if ((el.textContent || '').includes(actionType)) {
+                const link = el.querySelector('a') || el;
+                link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+                break;
+            }
         }
     }
 
@@ -106,44 +283,39 @@
         }
     }
 
-    // Attach event listeners
-    const btnAccept = capsuleEl.querySelector('#antigravity-btn-accept');
-    const btnReject = capsuleEl.querySelector('#antigravity-btn-reject');
-    const btnPrevHunk = capsuleEl.querySelector('#antigravity-btn-prev-hunk');
-    const btnNextHunk = capsuleEl.querySelector('#antigravity-btn-next-hunk');
-    const btnPrevFile = capsuleEl.querySelector('#antigravity-btn-prev-file');
-    const btnNextFile = capsuleEl.querySelector('#antigravity-btn-next-file');
-    const textFiles = capsuleEl.querySelector('#antigravity-files-text');
-    const fileNavSection = capsuleEl.querySelector('#antigravity-file-nav');
-
-    btnAccept?.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sendAction('accept'); });
-    btnReject?.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sendAction('reject'); });
-    btnPrevHunk?.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sendAction('previousHunk'); });
-    btnNextHunk?.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sendAction('nextHunk'); });
-    btnPrevFile?.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sendAction('previousFile'); });
-    btnNextFile?.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sendAction('nextFile'); });
+    // Attach click listeners
+    btnAccept.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sendAction('accept'); });
+    btnReject.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sendAction('reject'); });
+    btnPrevHunk.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sendAction('previousHunk'); });
+    btnNextHunk.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sendAction('nextHunk'); });
+    btnPrevFile.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sendAction('previousFile'); });
+    btnNextFile.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sendAction('nextFile'); });
 
     // Target container resolver
     function getMountTarget(): HTMLElement | null {
-        // 1. Look for the active editor group instance
-        const activeInstance = document.querySelector('.monaco-workbench .part.editor .editor-group-container.active .editor-instance') as HTMLElement | null;
-        if (activeInstance) {
-            return activeInstance;
-        }
-
-        // 2. Active editor group container
+        // 1. Look for the active editor group container (sits directly above bottom terminal panel!)
         const activeGroup = document.querySelector('.monaco-workbench .part.editor .editor-group-container.active') as HTMLElement | null;
         if (activeGroup) {
             return activeGroup;
         }
 
-        // 3. Fallback to any active monaco editor container
-        const monacoEditor = document.querySelector('.monaco-editor') as HTMLElement | null;
-        return monacoEditor;
+        // 2. Look for any active editor instance
+        const activeInstance = document.querySelector('.monaco-workbench .part.editor .editor-instance') as HTMLElement | null;
+        if (activeInstance) {
+            return activeInstance;
+        }
+
+        // 3. Fallback to active editor part
+        const editorPart = document.querySelector('.monaco-workbench .part.editor') as HTMLElement | null;
+        if (editorPart) {
+            return editorPart;
+        }
+
+        return document.body;
     }
 
     function checkDomDiffs(): boolean {
-        // Detect presence of inline diff decorations or CodeLens in DOM
+        // 1. Detect presence of inline diff CodeLens in DOM
         const codeLens = document.querySelectorAll('.codelens-decoration');
         for (let i = 0; i < codeLens.length; i++) {
             const txt = codeLens[i].textContent || '';
@@ -152,16 +324,27 @@
             }
         }
 
-        // Detect (Agent Edit) tab title
+        // 2. Detect (Agent Edit) tab title
         const activeTab = document.querySelector('.tab.active');
-        if (activeTab && (activeTab.textContent || '').includes('(Agent Edit)')) {
-            return true;
+        if (activeTab) {
+            const title = activeTab.textContent || '';
+            if (title.includes('(Agent Edit)') || activeTab.classList.contains('dirty')) {
+                return true;
+            }
         }
 
-        // Detect diff decorations
-        if (document.querySelector('[class*="diffEditor-insertedTextBackground"]') ||
-            document.querySelector('[class*="diffEditor-removedTextBorder"]') ||
-            document.querySelector('.inline-diff-modified-line')) {
+        // 3. Detect sidebar changes section ("Files With Changes" / "Reject all" / "Accept all")
+        const chatPanel = document.querySelector('.interactive-session, .chat-editor, [class*="chat"]');
+        if (chatPanel) {
+            const text = chatPanel.textContent || '';
+            if (text.includes('Files With Changes') || (text.includes('Reject all') && text.includes('Accept all'))) {
+                return true;
+            }
+        }
+
+        // 4. Any monaco editor with active decorations
+        const editor = document.querySelector('.monaco-editor');
+        if (editor && document.querySelector('.ced-1-TextEditorDecorationType1-1, .inline-diff-deleted-line, .inline-diff-inserted-line')) {
             return true;
         }
 
@@ -169,10 +352,8 @@
     }
 
     // State polling & synchronization loop
-    let lastHasDiffs = false;
-
     async function syncState() {
-        // Ensure mounted to current active editor
+        // Ensure mounted to current active editor container
         const mountTarget = getMountTarget();
         if (mountTarget && capsuleEl.parentElement !== mountTarget) {
             mountTarget.appendChild(capsuleEl);
@@ -181,7 +362,6 @@
         let hasDiffs = checkDomDiffs();
         let currentIdx = 1;
         let totalCount = 1;
-
         let enabled = true;
         let showReviewBar = true;
         let showFileNav = true;
@@ -204,7 +384,12 @@
                 }
             }
         } catch {
-            // Server may be starting up or idle, relying on DOM diff inspection
+            // Server may be idle, fallback to DOM diff inspection
+        }
+
+        // Check manual debug override
+        if ((window as any).__antigravityForceShowFloatingBar) {
+            hasDiffs = true;
         }
 
         // Apply position styling dynamically
@@ -218,31 +403,31 @@
             capsuleEl.style.transform = 'translateX(-50%)';
         }
 
-        if (textFiles) {
-            textFiles.textContent = `Edited files ${currentIdx}/${totalCount}`;
+        textFiles.textContent = `Edited files ${currentIdx}/${totalCount}`;
+
+        if (!showFileNav || totalCount <= 1) {
+            fileNavSection.classList.add('hidden');
+        } else {
+            fileNavSection.classList.remove('hidden');
         }
 
-        if (fileNavSection) {
-            if (!showFileNav || totalCount <= 1) {
-                fileNavSection.classList.add('hidden');
-            } else {
-                fileNavSection.classList.remove('hidden');
-            }
-        }
-
-        const shouldShow = enabled && showReviewBar && (!autoHideWhenClean || hasDiffs);
+        // If active editor exists and diffs detected
+        const hasActiveEditor = Boolean(document.querySelector('.monaco-editor'));
+        const shouldShow = enabled && showReviewBar && hasActiveEditor && (!autoHideWhenClean || hasDiffs);
 
         if (shouldShow) {
             capsuleEl.classList.remove('hidden-bar');
-            lastHasDiffs = true;
+            capsuleEl.style.display = 'flex';
         } else {
             capsuleEl.classList.add('hidden-bar');
-            lastHasDiffs = false;
+            capsuleEl.style.display = 'none';
         }
     }
 
-    // Run periodic sync loop
-    setInterval(syncState, 600);
+    // Run periodic sync loop every 300ms
+    setInterval(syncState, 300);
     // Initial sync
-    setTimeout(syncState, 100);
+    setTimeout(syncState, 50);
+
+    console.log('[Antigravity Floating Bar] Capsule review bar loaded successfully.');
 })();

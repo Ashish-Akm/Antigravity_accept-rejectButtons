@@ -128,6 +128,20 @@ export class WorkbenchInjector {
                 fs.writeFileSync(paths.htmlPath, html, 'utf8');
             }
 
+            // 2b. Also ensure workbench.js dynamically imports antigravity-floating-bar.js
+            const jsPath = path.join(paths.dirPath, 'workbench.js');
+            if (fs.existsSync(jsPath)) {
+                let jsContent = fs.readFileSync(jsPath, 'utf8');
+                if (!jsContent.includes('antigravity-floating-bar.js')) {
+                    const jsBackup = `${jsPath}.antigravity-bak`;
+                    if (!fs.existsSync(jsBackup)) {
+                        fs.writeFileSync(jsBackup, jsContent, 'utf8');
+                    }
+                    jsContent += '\nimport("./antigravity-floating-bar.js").catch(console.error);\n';
+                    fs.writeFileSync(jsPath, jsContent, 'utf8');
+                }
+            }
+
             // 3. Enable inline red lines for deleted code
             await WorkbenchInjector.enableInlineRedLines();
 

@@ -4,6 +4,7 @@
   "description": "Floating Accept/Reject review capsule bar for Antigravity IDE and VS Code with hunk and file navigation.",
   "version": "1.0.0",
   "publisher": "ashish-akm",
+  "icon": "images/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Ashish-Akm/Antigravity_accept-rejectButtons.git"
