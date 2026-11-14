@@ -8,13 +8,14 @@ A clean, minimalist floating review capsule bar for **Google Antigravity IDE** a
 
 ## Features
 
+- **In-Editor Floating Capsule Bar**: Floats directly inside the active Monaco code editor at the bottom viewport, mirroring Antigravity's native Cascade review UI.
 - **Accept Changes (`⌘↩` / `Ctrl+Enter`)**: Instantly accepts pending agent edits or stages modified hunks.
 - **Reject Changes (`⌘⌫` / `Ctrl+Backspace`)**: Reverts uncommitted changes cleanly.
 - **Previous Hunk (`⌥K` / `Alt+K`)**: Jumps smoothly to the previous diff hunk in the active editor.
 - **Next Hunk (`⌥J` / `Alt+J`)**: Jumps smoothly to the next diff hunk in the active editor.
 - **File Navigation (`< Edited files X/Y >`)**: Rapidly cycle across all modified files in the workspace.
 - **Zero Distraction**: Auto-hides when working in clean workspaces with no pending diffs.
-- **Dual Mode**: Interoperates with Antigravity Agent internal commands and standard Git diff workflows.
+- **Dual Mode**: Interoperates with Antigravity Agent internal commands, inline diffs, and standard Git diff workflows.
 
 ---
 

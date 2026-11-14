@@ -67,6 +67,16 @@
         "category": "Antigravity Diff"
       },
       {
+        "command": "antigravityFloatingDiff.installBar",
+        "title": "Install In-Editor Floating Review Bar",
+        "category": "Antigravity Diff"
+      },
+      {
+        "command": "antigravityFloatingDiff.uninstallBar",
+        "title": "Uninstall In-Editor Floating Review Bar",
+        "category": "Antigravity Diff"
+      },
+      {
         "command": "antigravityFloatingDiff.testReviewBar",
         "title": "Test Review Bar Status & Diagnostics",
         "category": "Antigravity Diff"
@@ -130,7 +140,7 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run build",
-    "build": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "build": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node && esbuild ./src/renderer.ts --bundle --outfile=dist/renderer.js --format=iife --platform=browser",
     "watch": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --watch"
   },
   "devDependencies": {

@@ -1,19 +1,42 @@
 import * as vscode from 'vscode';
 import { GitDiffTracker } from './gitTracker';
+import { FloatingBarServer } from './server';
+import { WorkbenchInjector } from './injector';
 
 export class FloatingReviewBar {
     private _statusBarContainer: vscode.StatusBarItem[] = [];
     private _tracker: GitDiffTracker;
+    private _server: FloatingBarServer;
     private _disposables: vscode.Disposable[] = [];
+    private _context: vscode.ExtensionContext;
 
-    constructor(tracker: GitDiffTracker) {
+    constructor(tracker: GitDiffTracker, context: vscode.ExtensionContext) {
         this._tracker = tracker;
+        this._context = context;
+        this._server = new FloatingBarServer(tracker);
         this.initStatusBarCapsule();
+        this.initInEditorBar();
         this._tracker.onDidUpdate(() => this.updateUi(), null, this._disposables);
     }
 
+    private async initInEditorBar(): Promise<void> {
+        const isInstalled = await WorkbenchInjector.isInstalled();
+        if (!isInstalled) {
+            const success = await WorkbenchInjector.install(this._context);
+            if (success) {
+                const choice = await vscode.window.showInformationMessage(
+                    "Antigravity Floating Capsule Bar installed into editor viewport. Reload window to activate.",
+                    "Reload Window"
+                );
+                if (choice === "Reload Window") {
+                    vscode.commands.executeCommand("workbench.action.reloadWindow");
+                }
+            }
+        }
+    }
+
     private initStatusBarCapsule(): void {
-        // High priority status bar capsule placed on the Left (right below the editor buffer)
+        // High priority status bar capsule placed on the Left
         // 1. Accept Changes Item (Primary Blue Capsule Button)
         const acceptItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 10005);
         acceptItem.text = `$(check) Accept Changes ⌘↩`;
@@ -25,7 +48,7 @@ export class FloatingReviewBar {
         // 2. Reject Changes Item
         const rejectItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 10004);
         rejectItem.text = `$(close) Reject ⌘⌫`;
-        rejectItem.tooltip = "Reject/Revert all pending diff changes in this file (Cmd+Backspace)";
+        rejectItem.tooltip = "Reject all pending diff changes in this file (Cmd+Backspace)";
         rejectItem.command = "antigravityFloatingDiff.rejectChanges";
         rejectItem.color = '#e0e0e0';
 
@@ -101,12 +124,12 @@ export class FloatingReviewBar {
             fileNavItem.text = `$(check) 0 modified files`;
         }
 
-        // Show all capsule items
         this._statusBarContainer.forEach(item => item.show());
     }
 
     public dispose(): void {
         this._statusBarContainer.forEach(item => item.dispose());
         this._disposables.forEach(d => d.dispose());
+        this._server.dispose();
     }
 }

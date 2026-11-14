@@ -23,6 +23,8 @@ test('Test 1: Package.json configuration & commands integrity', (t) => {
         'antigravityFloatingDiff.previousFile',
         'antigravityFloatingDiff.nextFile',
         'antigravityFloatingDiff.toggleBar',
+        'antigravityFloatingDiff.installBar',
+        'antigravityFloatingDiff.uninstallBar',
         'antigravityFloatingDiff.testReviewBar'
     ];
 
@@ -37,7 +39,7 @@ test('Test 1: Package.json configuration & commands integrity', (t) => {
     assert.ok(keybindings.includes('antigravityFloatingDiff.rejectChanges'), 'Reject changes must have keybinding');
 });
 
-test('Test 2: Compiled bundle exists and is valid CommonJS', (t) => {
+test('Test 2: Compiled bundle exists and is valid CommonJS & Browser IIFE', (t) => {
     const bundlePath = path.join(PROJECT_ROOT, 'dist', 'extension.js');
     assert.ok(fs.existsSync(bundlePath), 'dist/extension.js must exist');
     const content = fs.readFileSync(bundlePath, 'utf8');
@@ -46,6 +48,11 @@ test('Test 2: Compiled bundle exists and is valid CommonJS', (t) => {
     assert.ok(content.includes('activate'), 'Bundle must export activate');
     assert.ok(content.includes('deactivate'), 'Bundle must export deactivate');
     assert.ok(content.includes('antigravityFloatingDiff.acceptChanges'), 'Bundle must include accept command');
+
+    const rendererPath = path.join(PROJECT_ROOT, 'dist', 'renderer.js');
+    assert.ok(fs.existsSync(rendererPath), 'dist/renderer.js must exist');
+    const rendererContent = fs.readFileSync(rendererPath, 'utf8');
+    assert.ok(rendererContent.includes('cascade-bar'), 'Renderer must include cascade-bar DOM classes');
 });
 
 test('Test 3: Git Porcelain parser simulation', (t) => {

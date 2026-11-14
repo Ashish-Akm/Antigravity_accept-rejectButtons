@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { GitDiffTracker } from './gitTracker';
 import { FloatingReviewBar } from './floatingBar';
+import { WorkbenchInjector } from './injector';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as path from 'path';
-import * as fs from 'fs';
 
 const execAsync = promisify(exec);
 
@@ -12,7 +12,7 @@ export function activate(context: vscode.ExtensionContext) {
     console.log('[Antigravity Floating Diff] Activating extension...');
 
     const tracker = new GitDiffTracker();
-    const floatingBar = new FloatingReviewBar(tracker);
+    const floatingBar = new FloatingReviewBar(tracker, context);
     context.subscriptions.push(floatingBar);
 
     // Watch active editor changes to refresh tracker
@@ -192,6 +192,40 @@ export function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(nextFileCmd);
 
+    // ── COMMAND: Install In-Editor Bar ────────────────────────
+    const installBarCmd = vscode.commands.registerCommand('antigravityFloatingDiff.installBar', async () => {
+        const ok = await WorkbenchInjector.install(context);
+        if (ok) {
+            const choice = await vscode.window.showInformationMessage(
+                'In-Editor Floating Capsule Bar installed successfully. Please reload window to activate.',
+                'Reload Window'
+            );
+            if (choice === 'Reload Window') {
+                vscode.commands.executeCommand('workbench.action.reloadWindow');
+            }
+        } else {
+            vscode.window.showErrorMessage('Failed to install in-editor floating bar into workbench.');
+        }
+    });
+    context.subscriptions.push(installBarCmd);
+
+    // ── COMMAND: Uninstall In-Editor Bar ──────────────────────
+    const uninstallBarCmd = vscode.commands.registerCommand('antigravityFloatingDiff.uninstallBar', async () => {
+        const ok = await WorkbenchInjector.uninstall();
+        if (ok) {
+            const choice = await vscode.window.showInformationMessage(
+                'In-Editor Floating Capsule Bar removed. Please reload window.',
+                'Reload Window'
+            );
+            if (choice === 'Reload Window') {
+                vscode.commands.executeCommand('workbench.action.reloadWindow');
+            }
+        } else {
+            vscode.window.showErrorMessage('Failed to uninstall in-editor floating bar.');
+        }
+    });
+    context.subscriptions.push(uninstallBarCmd);
+
     // ── COMMAND: Toggle Bar ───────────────────────────────────
     const toggleCmd = vscode.commands.registerCommand('antigravityFloatingDiff.toggleBar', async () => {
         const config = vscode.workspace.getConfiguration('antigravityFloatingDiff');
@@ -207,8 +241,9 @@ export function activate(context: vscode.ExtensionContext) {
         await tracker.refresh();
         const count = tracker.modifiedFiles.length;
         const activeName = vscode.window.activeTextEditor?.document.fileName.split('/').pop() || 'None';
+        const isInstalled = await WorkbenchInjector.isInstalled();
         vscode.window.showInformationMessage(
-            `Antigravity Floating Diff is active! Active file: ${activeName} · Modified files detected: ${count}. Use Cmd+Enter to Accept, Cmd+Backspace to Reject.`
+            `Antigravity Floating Diff: In-editor bar is ${isInstalled ? 'installed' : 'pending reload'} · Active file: ${activeName} · Modified files detected: ${count}. Shortcuts: Cmd+Enter to Accept, Cmd+Backspace to Reject.`
         );
     });
     context.subscriptions.push(testCmd);
