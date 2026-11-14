@@ -1,0 +1,137 @@
+{
+  "name": "antigravity-floating-diff",
+  "displayName": "Antigravity Floating Diff Reviewer",
+  "description": "Floating Accept/Reject review capsule bar for Antigravity IDE and VS Code with hunk and file navigation.",
+  "version": "1.0.0",
+  "publisher": "ashish-akm",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ashish-Akm/antigravity-floating-diff.git"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other",
+    "SCM Providers",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "antigravity",
+    "diff",
+    "floating",
+    "accept",
+    "reject",
+    "cascade",
+    "code review"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "antigravityFloatingDiff.acceptChanges",
+        "title": "Accept Changes",
+        "category": "Antigravity Diff"
+      },
+      {
+        "command": "antigravityFloatingDiff.rejectChanges",
+        "title": "Reject Changes",
+        "category": "Antigravity Diff"
+      },
+      {
+        "command": "antigravityFloatingDiff.previousHunk",
+        "title": "Previous Hunk",
+        "category": "Antigravity Diff"
+      },
+      {
+        "command": "antigravityFloatingDiff.nextHunk",
+        "title": "Next Hunk",
+        "category": "Antigravity Diff"
+      },
+      {
+        "command": "antigravityFloatingDiff.previousFile",
+        "title": "Previous File",
+        "category": "Antigravity Diff"
+      },
+      {
+        "command": "antigravityFloatingDiff.nextFile",
+        "title": "Next File",
+        "category": "Antigravity Diff"
+      },
+      {
+        "command": "antigravityFloatingDiff.toggleBar",
+        "title": "Toggle Floating Diff Review Bar",
+        "category": "Antigravity Diff"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "antigravityFloatingDiff.acceptChanges",
+        "key": "cmd+enter",
+        "mac": "cmd+enter",
+        "win": "ctrl+enter",
+        "linux": "ctrl+enter",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "antigravityFloatingDiff.rejectChanges",
+        "key": "cmd+backspace",
+        "mac": "cmd+backspace",
+        "win": "ctrl+backspace",
+        "linux": "ctrl+backspace",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "antigravityFloatingDiff.previousHunk",
+        "key": "alt+k",
+        "mac": "alt+k",
+        "win": "alt+k",
+        "linux": "alt+k",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "antigravityFloatingDiff.nextHunk",
+        "key": "alt+j",
+        "mac": "alt+j",
+        "win": "alt+j",
+        "linux": "alt+j",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "title": "Antigravity Floating Diff",
+      "properties": {
+        "antigravityFloatingDiff.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable the floating review capsule bar."
+        },
+        "antigravityFloatingDiff.position": {
+          "type": "string",
+          "enum": ["bottom-center", "bottom-right", "status-bar"],
+          "default": "bottom-center",
+          "description": "Placement of the floating review bar."
+        },
+        "antigravityFloatingDiff.autoHideWhenClean": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically hide the floating bar when there are no modified files or hunks."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "watch": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.80.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.3"
+  }
+}
