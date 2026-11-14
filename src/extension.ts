@@ -57,6 +57,37 @@ export function activate(context: vscode.ExtensionContext) {
     // Initial immediate refresh
     tracker.refresh();
 
+    // Auto-protect inline deleted lines:
+    // Antigravity hides red deleted lines if files.autoSave triggers on focus change or after delay.
+    let savedAutoSaveMode: string | undefined = undefined;
+    const protectDeletedLines = async (hasActiveDiffs: boolean) => {
+        try {
+            const config = vscode.workspace.getConfiguration('antigravityFloatingDiff');
+            const preventHiding = config.get<boolean>('preventHidingDeletedLines', true);
+            if (!preventHiding) return;
+
+            const filesConfig = vscode.workspace.getConfiguration('files');
+            const currentAutoSave = filesConfig.get<string>('autoSave', 'off');
+
+            if (hasActiveDiffs && currentAutoSave !== 'off') {
+                savedAutoSaveMode = currentAutoSave;
+                await filesConfig.update('autoSave', 'off', vscode.ConfigurationTarget.Global);
+            } else if (!hasActiveDiffs && savedAutoSaveMode && currentAutoSave === 'off') {
+                await filesConfig.update('autoSave', savedAutoSaveMode, vscode.ConfigurationTarget.Global);
+                savedAutoSaveMode = undefined;
+            }
+        } catch {
+            // Non-critical configuration update guard
+        }
+    };
+
+    context.subscriptions.push(
+        tracker.onDidUpdate(() => {
+            const hasDiffs = tracker.modifiedFiles.length > 0;
+            protectDeletedLines(hasDiffs).catch(() => {});
+        })
+    );
+
     // ── COMMAND: Accept Changes (⌘↩) ──────────────────────────
     const acceptCmd = vscode.commands.registerCommand('antigravityFloatingDiff.acceptChanges', async () => {
         const editor = vscode.window.activeTextEditor;

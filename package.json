@@ -149,6 +149,11 @@
                     "default": true,
                     "description": "Display deleted code with inline red lines directly in the main code file instead of hiding them or opening a separate diff tab."
                 },
+                "antigravityFloatingDiff.preventHidingDeletedLines": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Automatically pause files.autoSave during active code reviews to prevent inline red deleted lines from being collapsed or hidden."
+                },
                 "antigravityFloatingDiff.position": {
                     "type": "string",
                     "enum": [
