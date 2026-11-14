@@ -20,6 +20,17 @@ A clean, minimalist floating review capsule bar for **Google Antigravity IDE** a
 
 ---
 
+## Send to Agent Diagnostics Bridge
+
+![Send to Agent in Problems Panel](https://raw.githubusercontent.com/Ashish-Akm/Antigravity_accept-rejectButtons/main/images/send_to_agent.png)
+
+A dedicated one-click diagnostics bridge available directly inside the Problems panel toolbar and floating review capsule:
+- **Instant Diagnostics Capture**: Automatically scans all active workspace compilation errors, syntax warnings, and file locations.
+- **Clipboard & Chat Integration**: Formats the diagnostic output cleanly as an `@current_problems` block and copies it to your clipboard.
+- **Zero Screenshot Hassle**: Pre-fills the formatted errors directly into the Antigravity Agent Chat input so you never need to take manual error screenshots.
+
+---
+
 ## Keyboard Shortcuts
 
 | Action | macOS Shortcut | Windows / Linux Shortcut |
