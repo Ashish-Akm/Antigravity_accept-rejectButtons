@@ -1,4 +1,4 @@
-# Antigravity Floating Diff Reviewer
+# Antigravity Accept & Reject Floating Buttons
 
 A clean, minimalist floating review capsule bar for **Google Antigravity IDE** and **VS Code**. Restores the iconic floating review toolbar (`Accept Changes ⌘↩` · `Reject ⌘⌫` · `↑ ⌥K` · `↓ ⌥J` · `< Edited files X/Y >`) with keyboard shortcuts and multi-file navigation.
 
@@ -33,8 +33,8 @@ A clean, minimalist floating review capsule bar for **Google Antigravity IDE** a
 
 ### From Source
 ```bash
-git clone https://github.com/Ashish-Akm/antigravity-floating-diff.git
-cd antigravity-floating-diff
+git clone https://github.com/Ashish-Akm/Antigravity_accept-rejectButtons.git
+cd Antigravity_accept-rejectButtons
 npm install
 npm run build
 ```
@@ -46,5 +46,5 @@ The extension bundle compiles to `dist/extension.js` and can be loaded directly 
 ## Author
 - Developed by: Ashish Kumar Mahto
 - Location: Ranchi, Jharkhand, India
-- Repository: [https://github.com/Ashish-Akm/antigravity-floating-diff](https://github.com/Ashish-Akm/antigravity-floating-diff)
+- Repository: [https://github.com/Ashish-Akm/Antigravity_accept-rejectButtons](https://github.com/Ashish-Akm/Antigravity_accept-rejectButtons)
 - License: MIT

@@ -1,12 +1,12 @@
 {
-  "name": "antigravity-floating-diff",
-  "displayName": "Antigravity Floating Diff Reviewer",
+  "name": "antigravity-accept-reject-buttons",
+  "displayName": "Antigravity Accept & Reject Floating Buttons",
   "description": "Floating Accept/Reject review capsule bar for Antigravity IDE and VS Code with hunk and file navigation.",
   "version": "1.0.0",
   "publisher": "ashish-akm",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Ashish-Akm/antigravity-floating-diff.git"
+    "url": "https://github.com/Ashish-Akm/Antigravity_accept-rejectButtons.git"
   },
   "engines": {
     "vscode": "^1.80.0"
