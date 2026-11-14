@@ -2,6 +2,8 @@
 
 A clean, minimalist floating review capsule bar for **Google Antigravity IDE** and **VS Code**. Restores the iconic floating review toolbar (`Accept Changes ⌘↩` · `Reject ⌘⌫` · `↑ ⌥K` · `↓ ⌥J` · `< Edited files X/Y >`) with keyboard shortcuts and multi-file navigation.
 
+![Antigravity Floating Diff Reviewer Preview](https://raw.githubusercontent.com/Ashish-Akm/Antigravity_accept-rejectButtons/main/images/preview.png)
+
 ---
 
 ## Features
