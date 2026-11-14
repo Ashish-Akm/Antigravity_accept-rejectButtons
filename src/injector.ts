@@ -5,8 +5,10 @@ import * as vscode from 'vscode';
 export class WorkbenchInjector {
     private static SCRIPT_NAME = 'antigravity-floating-bar.js';
     private static INJECTION_TAG = '<script src="./antigravity-floating-bar.js" type="module"></script>';
+    private static HIDE_LINES_TARGET = 'hideDeletedLines:xa=>n.workspace.getConfiguration("files",xa).get("autoSave","off")!=="off"';
+    private static HIDE_LINES_REPLACEMENT = 'hideDeletedLines:xa=>!1';
 
-    private static getWorkbenchPaths(): { htmlPath: string; scriptDestPath: string; dirPath: string } | null {
+    private static getWorkbenchPaths(): { htmlPath: string; scriptDestPath: string; dirPath: string; agyExtPath: string } | null {
         try {
             const appRoot = vscode.env.appRoot;
             if (!appRoot) {
@@ -16,9 +18,10 @@ export class WorkbenchInjector {
             const dirPath = path.join(appRoot, 'out', 'vs', 'code', 'electron-browser', 'workbench');
             const htmlPath = path.join(dirPath, 'workbench.html');
             const scriptDestPath = path.join(dirPath, WorkbenchInjector.SCRIPT_NAME);
+            const agyExtPath = path.join(appRoot, 'extensions', 'agy', 'vscode', 'extension.js');
 
             if (fs.existsSync(htmlPath)) {
-                return { htmlPath, scriptDestPath, dirPath };
+                return { htmlPath, scriptDestPath, dirPath, agyExtPath };
             }
         } catch {
             // Path resolution error fallback
@@ -39,6 +42,51 @@ export class WorkbenchInjector {
             const html = fs.readFileSync(paths.htmlPath, 'utf8');
             return html.includes(WorkbenchInjector.SCRIPT_NAME);
         } catch {
+            return false;
+        }
+    }
+
+    public static async enableInlineRedLines(): Promise<boolean> {
+        const paths = this.getWorkbenchPaths();
+        if (!paths || !fs.existsSync(paths.agyExtPath)) {
+            return false;
+        }
+
+        try {
+            let content = fs.readFileSync(paths.agyExtPath, 'utf8');
+            if (content.includes(WorkbenchInjector.HIDE_LINES_TARGET)) {
+                // Backup before editing
+                const backupPath = `${paths.agyExtPath}.antigravity-bak`;
+                if (!fs.existsSync(backupPath)) {
+                    fs.writeFileSync(backupPath, content, 'utf8');
+                }
+                content = content.replace(WorkbenchInjector.HIDE_LINES_TARGET, WorkbenchInjector.HIDE_LINES_REPLACEMENT);
+                fs.writeFileSync(paths.agyExtPath, content, 'utf8');
+                return true;
+            }
+            return true;
+        } catch (err: any) {
+            console.error('Failed to enable inline red deleted lines:', err);
+            return false;
+        }
+    }
+
+    public static async disableInlineRedLines(): Promise<boolean> {
+        const paths = this.getWorkbenchPaths();
+        if (!paths || !fs.existsSync(paths.agyExtPath)) {
+            return false;
+        }
+
+        try {
+            let content = fs.readFileSync(paths.agyExtPath, 'utf8');
+            if (content.includes(WorkbenchInjector.HIDE_LINES_REPLACEMENT)) {
+                content = content.replace(WorkbenchInjector.HIDE_LINES_REPLACEMENT, WorkbenchInjector.HIDE_LINES_TARGET);
+                fs.writeFileSync(paths.agyExtPath, content, 'utf8');
+                return true;
+            }
+            return true;
+        } catch (err: any) {
+            console.error('Failed to disable inline red deleted lines:', err);
             return false;
         }
     }
@@ -67,15 +115,22 @@ export class WorkbenchInjector {
                     fs.writeFileSync(backupPath, html, 'utf8');
                 }
 
-                // Inject script tag before </body>
-                if (html.includes('</body>')) {
-                    html = html.replace('</body>', `\t${WorkbenchInjector.INJECTION_TAG}\n</body>`);
+                // Inject script tag after workbench.js
+                const tag = `\n${WorkbenchInjector.INJECTION_TAG}`;
+                if (html.includes('<script src="./workbench.js" type="module"></script>')) {
+                    html = html.replace('<script src="./workbench.js" type="module"></script>', `<script src="./workbench.js" type="module"></script>${tag}`);
+                } else if (html.includes('</body>')) {
+                    html = html.replace('</body>', `${tag}\n</body>`);
                 } else {
-                    html += `\n${WorkbenchInjector.INJECTION_TAG}\n`;
+                    html += `${tag}\n`;
                 }
 
                 fs.writeFileSync(paths.htmlPath, html, 'utf8');
             }
+
+            // 3. Enable inline red lines for deleted code
+            await WorkbenchInjector.enableInlineRedLines();
+
             return true;
         } catch (err: any) {
             console.error('Failed to install in-editor floating bar into workbench:', err);
@@ -101,6 +156,10 @@ export class WorkbenchInjector {
             if (fs.existsSync(paths.scriptDestPath)) {
                 fs.unlinkSync(paths.scriptDestPath);
             }
+
+            // Restore inline diff handling
+            await WorkbenchInjector.disableInlineRedLines();
+
             return true;
         } catch (err: any) {
             console.error('Failed to uninstall in-editor floating bar from workbench:', err);
