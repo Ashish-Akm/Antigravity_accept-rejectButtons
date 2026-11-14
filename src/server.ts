@@ -44,9 +44,8 @@ export class FloatingBarServer {
                 const currentIdx = total > 0 ? this._tracker.activeFileIndex + 1 : 0;
                 const activeFile = this._tracker.activeFile || '';
 
-                // Active document check
                 const activeEditor = vscode.window.activeTextEditor;
-                const hasActiveDoc = Boolean(activeEditor && activeEditor.document);
+                const activeFileHasHunks = this._tracker.currentHunks.length > 0;
 
                 const config = vscode.workspace.getConfiguration('antigravityFloatingDiff');
                 const enabled = config.get<boolean>('enabled', true);
@@ -57,7 +56,7 @@ export class FloatingBarServer {
                 const autoHideWhenClean = config.get<boolean>('autoHideWhenClean', true);
 
                 const state: FloatingBarState = {
-                    hasDiffs: total > 0 || hasActiveDoc,
+                    hasDiffs: activeFileHasHunks,
                     currentFileIndex: currentIdx > 0 ? currentIdx : 1,
                     totalFiles: total > 0 ? total : 1,
                     activeFile: activeFile,

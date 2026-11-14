@@ -438,37 +438,38 @@
     }
 
     function checkDomDiffs(): boolean {
-        // 1. Detect presence of inline diff CodeLens in DOM
-        const codeLens = document.querySelectorAll('.codelens-decoration');
+        // Find active editor container
+        const activeGroup = document.querySelector('.monaco-workbench .part.editor .editor-group-container.active');
+        if (!activeGroup) {
+            return false;
+        }
+
+        // 1. Detect presence of active inline diff CodeLens in the ACTIVE editor
+        const codeLens = activeGroup.querySelectorAll('.codelens-decoration');
         for (let i = 0; i < codeLens.length; i++) {
             const txt = codeLens[i].textContent || '';
-            if (txt.includes('Accept') || txt.includes('Reject')) {
+            if ((txt.includes('Accept') && txt.includes('Reject')) ||
+                txt.includes('line deleted') || txt.includes('lines deleted') ||
+                txt.includes('Accept Changes')) {
                 return true;
             }
         }
 
-        // 2. Detect (Agent Edit) tab title
-        const activeTab = document.querySelector('.tab.active');
+        // 2. Detect Antigravity inline diff decorations specifically in the ACTIVE editor view lines
+        const editorLines = activeGroup.querySelector('.view-lines');
+        if (editorLines) {
+            if (editorLines.querySelector('.ced-1-TextEditorDecorationType1-1, .inline-diff-deleted-line, .inline-diff-inserted-line, [class*="diffEditor.insertedTextBackground"], [class*="diffEditor.removedTextBackground"]')) {
+                return true;
+            }
+        }
+
+        // 3. Detect (Agent Edit) tab title in the active editor
+        const activeTab = activeGroup.querySelector('.tab.active');
         if (activeTab) {
             const title = activeTab.textContent || '';
-            if (title.includes('(Agent Edit)') || activeTab.classList.contains('dirty')) {
+            if (title.includes('(Agent Edit)')) {
                 return true;
             }
-        }
-
-        // 3. Detect sidebar changes section ("Files With Changes" / "Reject all" / "Accept all")
-        const chatPanel = document.querySelector('.interactive-session, .chat-editor, [class*="chat"]');
-        if (chatPanel) {
-            const text = chatPanel.textContent || '';
-            if (text.includes('Files With Changes') || (text.includes('Reject all') && text.includes('Accept all'))) {
-                return true;
-            }
-        }
-
-        // 4. Any monaco editor with active decorations
-        const editor = document.querySelector('.monaco-editor');
-        if (editor && document.querySelector('.ced-1-TextEditorDecorationType1-1, .inline-diff-deleted-line, .inline-diff-inserted-line')) {
-            return true;
         }
 
         return false;
@@ -498,15 +499,16 @@
             const res = await fetch(`${SERVER_URL}/state`);
             if (res.ok) {
                 const data: any = await res.json();
-                if (data.hasDiffs !== undefined) {
-                    hasDiffs = hasDiffs || Boolean(data.hasDiffs);
-                    currentIdx = data.currentFileIndex || 1;
-                    totalCount = data.totalFiles || 1;
-                    if (data.enabled !== undefined) enabled = Boolean(data.enabled);
-                    if (data.showReviewBar !== undefined) showReviewBar = Boolean(data.showReviewBar);
-                    if (data.showFileNavigation !== undefined) showFileNav = Boolean(data.showFileNavigation);
-                    if (data.position !== undefined) position = String(data.position);
-                    if (data.autoHideWhenClean !== undefined) autoHideWhenClean = Boolean(data.autoHideWhenClean);
+                if (data.enabled !== undefined) enabled = Boolean(data.enabled);
+                if (data.showReviewBar !== undefined) showReviewBar = Boolean(data.showReviewBar);
+                if (data.showFileNavigation !== undefined) showFileNav = Boolean(data.showFileNavigation);
+                if (data.position !== undefined) position = String(data.position);
+                if (data.autoHideWhenClean !== undefined) autoHideWhenClean = Boolean(data.autoHideWhenClean);
+                currentIdx = data.currentFileIndex || 1;
+                totalCount = data.totalFiles || 1;
+
+                if (!autoHideWhenClean) {
+                    hasDiffs = true;
                 }
             }
         } catch {
