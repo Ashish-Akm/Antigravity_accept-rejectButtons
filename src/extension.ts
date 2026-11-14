@@ -3,6 +3,8 @@ import { GitDiffTracker } from './gitTracker';
 import { FloatingReviewBar } from './floatingBar';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import * as path from 'path';
+import * as fs from 'fs';
 
 const execAsync = promisify(exec);
 
@@ -27,11 +29,14 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // Periodic refresh
+    // Periodic refresh every 3 seconds to keep sync with Git & agent edits
     const interval = setInterval(() => {
         tracker.refresh();
     }, 3000);
     context.subscriptions.push({ dispose: () => clearInterval(interval) });
+
+    // Initial immediate refresh
+    tracker.refresh();
 
     // ── COMMAND: Accept Changes (⌘↩) ──────────────────────────
     const acceptCmd = vscode.commands.registerCommand('antigravityFloatingDiff.acceptChanges', async () => {
@@ -42,18 +47,19 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         const filePath = editor.document.uri.fsPath;
+        const fileName = path.basename(filePath);
 
         // 1. Try dispatching Antigravity internal agent accept command if available
         try {
             const allCommands = await vscode.commands.getCommands();
             if (allCommands.includes('antigravity.prioritized.agentAcceptAllInFile')) {
                 await vscode.commands.executeCommand('antigravity.prioritized.agentAcceptAllInFile');
-                vscode.window.showInformationMessage(`Accepted Antigravity agent changes in ${editor.document.fileName.split('/').pop()}`);
+                vscode.window.showInformationMessage(`Accepted Antigravity agent changes in ${fileName}`);
                 await tracker.refresh();
                 return;
             } else if (allCommands.includes('antigravity.inlineDiff.acceptAll')) {
                 await vscode.commands.executeCommand('antigravity.inlineDiff.acceptAll');
-                vscode.window.showInformationMessage(`Accepted inline diff in ${editor.document.fileName.split('/').pop()}`);
+                vscode.window.showInformationMessage(`Accepted inline diff in ${fileName}`);
                 await tracker.refresh();
                 return;
             }
@@ -66,7 +72,7 @@ export function activate(context: vscode.ExtensionContext) {
             const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
             if (root) {
                 await execAsync(`git add "${filePath}"`, { cwd: root });
-                vscode.window.showInformationMessage(`Staged changes for ${editor.document.fileName.split('/').pop()}`);
+                vscode.window.showInformationMessage(`Staged changes for ${fileName}`);
             }
         } catch (e: any) {
             vscode.window.showErrorMessage(`Failed to accept/stage changes: ${e.message}`);
@@ -85,18 +91,19 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         const filePath = editor.document.uri.fsPath;
+        const fileName = path.basename(filePath);
 
         // 1. Try dispatching Antigravity internal agent reject command if available
         try {
             const allCommands = await vscode.commands.getCommands();
             if (allCommands.includes('antigravity.prioritized.agentRejectAllInFile')) {
                 await vscode.commands.executeCommand('antigravity.prioritized.agentRejectAllInFile');
-                vscode.window.showInformationMessage(`Rejected Antigravity agent changes in ${editor.document.fileName.split('/').pop()}`);
+                vscode.window.showInformationMessage(`Rejected Antigravity agent changes in ${fileName}`);
                 await tracker.refresh();
                 return;
             } else if (allCommands.includes('antigravity.inlineDiff.rejectAll')) {
                 await vscode.commands.executeCommand('antigravity.inlineDiff.rejectAll');
-                vscode.window.showInformationMessage(`Rejected inline diff in ${editor.document.fileName.split('/').pop()}`);
+                vscode.window.showInformationMessage(`Rejected inline diff in ${fileName}`);
                 await tracker.refresh();
                 return;
             }
@@ -109,7 +116,7 @@ export function activate(context: vscode.ExtensionContext) {
             const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
             if (root) {
                 await execAsync(`git checkout -- "${filePath}"`, { cwd: root });
-                vscode.window.showInformationMessage(`Reverted changes for ${editor.document.fileName.split('/').pop()}`);
+                vscode.window.showInformationMessage(`Reverted changes for ${fileName}`);
             }
         } catch (e: any) {
             vscode.window.showErrorMessage(`Failed to revert changes: ${e.message}`);
@@ -152,7 +159,10 @@ export function activate(context: vscode.ExtensionContext) {
     // ── COMMAND: Previous File (<) ────────────────────────────
     const prevFileCmd = vscode.commands.registerCommand('antigravityFloatingDiff.previousFile', async () => {
         const files = tracker.modifiedFiles;
-        if (files.length === 0) return;
+        if (files.length === 0) {
+            vscode.window.showInformationMessage('No modified files to navigate.');
+            return;
+        }
         const currentIdx = tracker.activeFileIndex;
         const newIdx = (currentIdx - 1 + files.length) % files.length;
         const target = files[newIdx];
@@ -167,7 +177,10 @@ export function activate(context: vscode.ExtensionContext) {
     // ── COMMAND: Next File (>) ────────────────────────────────
     const nextFileCmd = vscode.commands.registerCommand('antigravityFloatingDiff.nextFile', async () => {
         const files = tracker.modifiedFiles;
-        if (files.length === 0) return;
+        if (files.length === 0) {
+            vscode.window.showInformationMessage('No modified files to navigate.');
+            return;
+        }
         const currentIdx = tracker.activeFileIndex;
         const newIdx = (currentIdx + 1) % files.length;
         const target = files[newIdx];
@@ -188,6 +201,17 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage(`Antigravity Floating Diff review bar ${!current ? 'enabled' : 'disabled'}.`);
     });
     context.subscriptions.push(toggleCmd);
+
+    // ── COMMAND: Self-Test / Simulation ───────────────────────
+    const testCmd = vscode.commands.registerCommand('antigravityFloatingDiff.testReviewBar', async () => {
+        await tracker.refresh();
+        const count = tracker.modifiedFiles.length;
+        const activeName = vscode.window.activeTextEditor?.document.fileName.split('/').pop() || 'None';
+        vscode.window.showInformationMessage(
+            `Antigravity Floating Diff is active! Active file: ${activeName} · Modified files detected: ${count}. Use Cmd+Enter to Accept, Cmd+Backspace to Reject.`
+        );
+    });
+    context.subscriptions.push(testCmd);
 
     console.log('[Antigravity Floating Diff] Extension activated successfully.');
 }

@@ -57,15 +57,19 @@ export class GitDiffTracker {
             
             const files: ModifiedFileInfo[] = [];
             for (const line of lines) {
-                const status = line.substring(0, 2).trim();
-                const filePath = line.substring(3).trim();
-                if (status === 'M' || status === 'MM' || status === 'AM' || status === '??') {
-                    const fullUri = vscode.Uri.file(`${rootPath}/${filePath}`);
-                    files.push({
-                        uri: fullUri,
-                        relativePath: filePath,
-                        hunkCount: 1
-                    });
+                const trimmed = line.trim();
+                const spaceIdx = trimmed.indexOf(' ');
+                if (spaceIdx > 0) {
+                    const status = trimmed.slice(0, spaceIdx);
+                    const filePath = trimmed.slice(spaceIdx + 1).trim();
+                    if (status.includes('M') || status.includes('A') || status.includes('?')) {
+                        const fullUri = vscode.Uri.file(`${rootPath}/${filePath}`);
+                        files.push({
+                            uri: fullUri,
+                            relativePath: filePath,
+                            hunkCount: 1
+                        });
+                    }
                 }
             }
 
