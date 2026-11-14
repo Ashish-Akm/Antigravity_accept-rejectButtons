@@ -139,18 +139,13 @@ export class FloatingBarServer {
                 }
                 break;
             case 'previousFile':
-                try {
-                    await vscode.commands.executeCommand('antigravity.prioritized.agentFocusPreviousFile');
-                } catch {
-                    this._tracker.previousFile();
-                }
+                await this._tracker.previousFile();
                 break;
             case 'nextFile':
-                try {
-                    await vscode.commands.executeCommand('antigravity.prioritized.agentFocusNextFile');
-                } catch {
-                    this._tracker.nextFile();
-                }
+                await this._tracker.nextFile();
+                break;
+            case 'selectFile':
+                await this._tracker.selectFile();
                 break;
             case 'sendProblemsToAgent':
                 await ProblemsSender.sendToAgent();

@@ -63,6 +63,11 @@
                 "category": "Antigravity Diff"
             },
             {
+                "command": "antigravityFloatingDiff.selectFile",
+                "title": "Select Edited File",
+                "category": "Antigravity Diff"
+            },
+            {
                 "command": "antigravityFloatingDiff.toggleBar",
                 "title": "Toggle Floating Diff Review Bar",
                 "category": "Antigravity Diff"

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -63,7 +64,8 @@ export class GitDiffTracker {
                     const status = trimmed.slice(0, spaceIdx);
                     const filePath = trimmed.slice(spaceIdx + 1).trim();
                     if (status.includes('M') || status.includes('A') || status.includes('?')) {
-                        const fullUri = vscode.Uri.file(`${rootPath}/${filePath}`);
+                        const resolvedPath = path.resolve(rootPath, filePath);
+                        const fullUri = vscode.Uri.file(resolvedPath);
                         files.push({
                             uri: fullUri,
                             relativePath: filePath,
@@ -78,8 +80,8 @@ export class GitDiffTracker {
             // Update current active file index
             const activeEditor = vscode.window.activeTextEditor;
             if (activeEditor) {
-                const activePath = activeEditor.document.uri.fsPath;
-                const idx = files.findIndex(f => f.uri.fsPath === activePath);
+                const activePath = path.normalize(activeEditor.document.uri.fsPath);
+                const idx = files.findIndex(f => path.normalize(f.uri.fsPath) === activePath);
                 this._activeFileIndex = idx >= 0 ? idx : 0;
                 await this.refreshHunksForEditor(activeEditor);
             } else {
@@ -170,8 +172,13 @@ export class GitDiffTracker {
         this._activeFileIndex = (this._activeFileIndex - 1 + this._modifiedFiles.length) % this._modifiedFiles.length;
         const target = this._modifiedFiles[this._activeFileIndex];
         if (target) {
-            const doc = await vscode.workspace.openTextDocument(target.uri);
-            await vscode.window.showTextDocument(doc);
+            try {
+                const doc = await vscode.workspace.openTextDocument(target.uri);
+                await vscode.window.showTextDocument(doc, { preview: false });
+                this._onDidUpdate.fire();
+            } catch (err) {
+                console.error('Failed to open previous file:', err);
+            }
         }
     }
 
@@ -180,8 +187,42 @@ export class GitDiffTracker {
         this._activeFileIndex = (this._activeFileIndex + 1) % this._modifiedFiles.length;
         const target = this._modifiedFiles[this._activeFileIndex];
         if (target) {
-            const doc = await vscode.workspace.openTextDocument(target.uri);
-            await vscode.window.showTextDocument(doc);
+            try {
+                const doc = await vscode.workspace.openTextDocument(target.uri);
+                await vscode.window.showTextDocument(doc, { preview: false });
+                this._onDidUpdate.fire();
+            } catch (err) {
+                console.error('Failed to open next file:', err);
+            }
+        }
+    }
+
+    public async selectFile(): Promise<void> {
+        if (this._modifiedFiles.length === 0) {
+            vscode.window.showInformationMessage('No modified files in workspace.');
+            return;
+        }
+
+        const items = this._modifiedFiles.map((file, idx) => ({
+            label: `${idx + 1}. ${path.basename(file.relativePath)}`,
+            description: file.relativePath,
+            index: idx,
+            uri: file.uri
+        }));
+
+        const selected = await vscode.window.showQuickPick(items, {
+            placeHolder: `Jump to modified file (${this._modifiedFiles.length} files edited)`
+        });
+
+        if (selected) {
+            this._activeFileIndex = selected.index;
+            try {
+                const doc = await vscode.workspace.openTextDocument(selected.uri);
+                await vscode.window.showTextDocument(doc, { preview: false });
+                this._onDidUpdate.fire();
+            } catch (err) {
+                console.error('Failed to open selected file:', err);
+            }
         }
     }
 }

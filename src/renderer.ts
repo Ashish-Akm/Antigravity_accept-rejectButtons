@@ -113,19 +113,45 @@
         .antigravity-capsule-root .file-nav-section {
             display: flex !important;
             align-items: center !important;
-            gap: 4px !important;
+            gap: 2px !important;
             padding-left: 4px !important;
             border-right: 1px solid rgba(255, 255, 255, 0.16) !important;
             padding-right: 6px !important;
+            user-select: none !important;
         }
         .antigravity-capsule-root .file-nav-section.hidden {
             display: none !important;
         }
+        .antigravity-capsule-root .file-nav-section button {
+            min-width: 22px !important;
+            height: 22px !important;
+            padding: 0 4px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 13px !important;
+            font-weight: bold !important;
+            line-height: 1 !important;
+            border-radius: 4px !important;
+            background-color: transparent !important;
+            color: #9cdcfe !important;
+        }
+        .antigravity-capsule-root .file-nav-section button:hover {
+            background-color: rgba(255, 255, 255, 0.14) !important;
+            color: #ffffff !important;
+        }
         .antigravity-capsule-root .file-nav-display-text {
             font-size: 11px !important;
             color: #9cdcfe !important;
-            padding: 0 4px !important;
+            padding: 2px 6px !important;
             white-space: nowrap !important;
+            cursor: pointer !important;
+            border-radius: 4px !important;
+            transition: background-color 0.12s ease, color 0.12s ease !important;
+        }
+        .antigravity-capsule-root .file-nav-display-text:hover {
+            background-color: rgba(255, 255, 255, 0.14) !important;
+            color: #ffffff !important;
         }
         .antigravity-capsule-root .agent-bridge-section {
             display: flex !important;
@@ -263,6 +289,7 @@
     textFiles.className = 'file-nav-display-text';
     textFiles.id = 'antigravity-files-text';
     textFiles.textContent = 'Edited files 1/1';
+    textFiles.title = 'Click to open list of edited files';
 
     const btnNextFile = document.createElement('button');
     btnNextFile.className = 'next-file secondary';
@@ -299,6 +326,8 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action })
+            }).then(() => {
+                setTimeout(syncState, 120);
             }).catch(() => {});
         } catch {}
 
@@ -349,6 +378,7 @@
     btnNextHunk.addEventListener('click', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); sendAction('nextHunk'); });
     btnPrevFile.addEventListener('click', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); sendAction('previousFile'); });
     btnNextFile.addEventListener('click', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); sendAction('nextFile'); });
+    textFiles.addEventListener('click', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); sendAction('selectFile'); });
     btnSendToAgent.addEventListener('click', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); sendAction('sendProblemsToAgent'); });
 
     // Target container resolver for capsule bar

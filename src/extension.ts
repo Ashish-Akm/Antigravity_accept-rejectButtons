@@ -58,7 +58,7 @@ export function activate(context: vscode.ExtensionContext) {
     tracker.refresh();
 
     // Ensure inline red deleted lines are enabled (Trusted Types & AutoSave safe)
-    WorkbenchInjector.enableInlineRedLines().catch(() => {});
+    WorkbenchInjector.enableInlineRedLines().catch(() => { });
 
     // ── COMMAND: Accept Changes (⌘↩) ──────────────────────────
     const acceptCmd = vscode.commands.registerCommand('antigravityFloatingDiff.acceptChanges', async () => {
@@ -180,39 +180,21 @@ export function activate(context: vscode.ExtensionContext) {
 
     // ── COMMAND: Previous File (<) ────────────────────────────
     const prevFileCmd = vscode.commands.registerCommand('antigravityFloatingDiff.previousFile', async () => {
-        const files = tracker.modifiedFiles;
-        if (files.length === 0) {
-            vscode.window.showInformationMessage('No modified files to navigate.');
-            return;
-        }
-        const currentIdx = tracker.activeFileIndex;
-        const newIdx = (currentIdx - 1 + files.length) % files.length;
-        const target = files[newIdx];
-        if (target) {
-            const doc = await vscode.workspace.openTextDocument(target.uri);
-            await vscode.window.showTextDocument(doc);
-            await tracker.refresh();
-        }
+        await tracker.previousFile();
     });
     context.subscriptions.push(prevFileCmd);
 
     // ── COMMAND: Next File (>) ────────────────────────────────
     const nextFileCmd = vscode.commands.registerCommand('antigravityFloatingDiff.nextFile', async () => {
-        const files = tracker.modifiedFiles;
-        if (files.length === 0) {
-            vscode.window.showInformationMessage('No modified files to navigate.');
-            return;
-        }
-        const currentIdx = tracker.activeFileIndex;
-        const newIdx = (currentIdx + 1) % files.length;
-        const target = files[newIdx];
-        if (target) {
-            const doc = await vscode.workspace.openTextDocument(target.uri);
-            await vscode.window.showTextDocument(doc);
-            await tracker.refresh();
-        }
+        await tracker.nextFile();
     });
     context.subscriptions.push(nextFileCmd);
+
+    // ── COMMAND: Select File (Click text) ─────────────────────
+    const selectFileCmd = vscode.commands.registerCommand('antigravityFloatingDiff.selectFile', async () => {
+        await tracker.selectFile();
+    });
+    context.subscriptions.push(selectFileCmd);
 
     // ── COMMAND: Install In-Editor Bar ────────────────────────
     const installBarCmd = vscode.commands.registerCommand('antigravityFloatingDiff.installBar', async () => {
