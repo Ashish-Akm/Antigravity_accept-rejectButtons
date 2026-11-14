@@ -7,6 +7,12 @@ export interface FloatingBarState {
     currentFileIndex: number;
     totalFiles: number;
     activeFile?: string;
+    enabled: boolean;
+    showReviewBar: boolean;
+    showDeletedLines: boolean;
+    showFileNavigation: boolean;
+    position: string;
+    autoHideWhenClean: boolean;
 }
 
 export class FloatingBarServer {
@@ -41,11 +47,25 @@ export class FloatingBarServer {
                 const activeEditor = vscode.window.activeTextEditor;
                 const hasActiveDoc = Boolean(activeEditor && activeEditor.document);
 
+                const config = vscode.workspace.getConfiguration('antigravityFloatingDiff');
+                const enabled = config.get<boolean>('enabled', true);
+                const showReviewBar = config.get<boolean>('showReviewBar', true);
+                const showDeletedLines = config.get<boolean>('showDeletedLines', true);
+                const showFileNavigation = config.get<boolean>('showFileNavigation', true);
+                const position = config.get<string>('position', 'bottom-center');
+                const autoHideWhenClean = config.get<boolean>('autoHideWhenClean', true);
+
                 const state: FloatingBarState = {
                     hasDiffs: total > 0 || hasActiveDoc,
                     currentFileIndex: currentIdx > 0 ? currentIdx : 1,
                     totalFiles: total > 0 ? total : 1,
-                    activeFile: activeFile
+                    activeFile: activeFile,
+                    enabled: enabled,
+                    showReviewBar: showReviewBar,
+                    showDeletedLines: showDeletedLines,
+                    showFileNavigation: showFileNavigation,
+                    position: position,
+                    autoHideWhenClean: autoHideWhenClean
                 };
 
                 res.writeHead(200, { 'Content-Type': 'application/json' });

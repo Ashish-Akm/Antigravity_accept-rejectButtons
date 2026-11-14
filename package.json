@@ -117,23 +117,47 @@
       }
     ],
     "configuration": {
-      "title": "Antigravity Floating Diff",
+      "title": "Antigravity Floating Diff Reviewer",
       "properties": {
         "antigravityFloatingDiff.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable or disable the floating review capsule bar."
+          "description": "Master switch to enable or disable Antigravity Floating Diff Reviewer."
+        },
+        "antigravityFloatingDiff.showReviewBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Display the floating capsule review bar (Accept Changes, Reject, Hunk and File navigation) floating inside the active code editor."
+        },
+        "antigravityFloatingDiff.showDeletedLines": {
+          "type": "boolean",
+          "default": true,
+          "description": "Display deleted code with inline red lines directly in the main code file instead of hiding them or opening a separate diff tab."
         },
         "antigravityFloatingDiff.position": {
           "type": "string",
-          "enum": ["bottom-center", "bottom-right", "status-bar"],
+          "enum": [
+            "bottom-center",
+            "bottom-right",
+            "status-bar"
+          ],
           "default": "bottom-center",
-          "description": "Placement of the floating review bar."
+          "description": "Placement of the floating review bar inside the active editor viewport."
         },
         "antigravityFloatingDiff.autoHideWhenClean": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically hide the floating bar when there are no modified files or hunks."
+          "description": "Automatically hide the floating review bar when the active file or workspace has no pending diff changes."
+        },
+        "antigravityFloatingDiff.showFileNavigation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the multi-file navigation section ('< Edited files X/Y >') in the floating review capsule bar."
+        },
+        "antigravityFloatingDiff.enableStatusBarFallback": {
+          "type": "boolean",
+          "default": true,
+          "description": "Display status bar review items as an additional fallback in the bottom status line."
         }
       }
     }

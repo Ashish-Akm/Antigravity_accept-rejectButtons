@@ -32,6 +32,22 @@ A clean, minimalist floating review capsule bar for **Google Antigravity IDE** a
 
 ---
 
+## Configuration Settings
+
+You can customize the extension via VS Code / Antigravity Settings (`Cmd + ,` or `Ctrl + ,`):
+
+| Setting | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `antigravityFloatingDiff.enabled` | `boolean` | `true` | Master switch to enable or disable the floating review capsule bar and diff enhancements. |
+| `antigravityFloatingDiff.showReviewBar` | `boolean` | `true` | Display the floating capsule review bar inside the active code editor viewport. |
+| `antigravityFloatingDiff.showDeletedLines` | `boolean` | `true` | Display deleted code with inline red lines directly in the main code file. |
+| `antigravityFloatingDiff.position` | `string` | `"bottom-center"` | Placement of the review bar (`"bottom-center"`, `"bottom-right"`, or `"status-bar"`). |
+| `antigravityFloatingDiff.autoHideWhenClean` | `boolean` | `true` | Automatically hide the floating bar when there are no modified files or hunks. |
+| `antigravityFloatingDiff.showFileNavigation` | `boolean` | `true` | Show the multi-file navigation section (`< Edited files X/Y >`) in the floating bar. |
+| `antigravityFloatingDiff.enableStatusBarFallback` | `boolean` | `true` | Display status bar review items as an additional fallback in the bottom status line. |
+
+---
+
 ## Installation
 
 ### From Source

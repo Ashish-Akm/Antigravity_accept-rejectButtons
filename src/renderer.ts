@@ -182,6 +182,12 @@
         let currentIdx = 1;
         let totalCount = 1;
 
+        let enabled = true;
+        let showReviewBar = true;
+        let showFileNav = true;
+        let position = 'bottom-center';
+        let autoHideWhenClean = true;
+
         try {
             const res = await fetch(`${SERVER_URL}/state`);
             if (res.ok) {
@@ -190,10 +196,26 @@
                     hasDiffs = hasDiffs || Boolean(data.hasDiffs);
                     currentIdx = data.currentFileIndex || 1;
                     totalCount = data.totalFiles || 1;
+                    if (data.enabled !== undefined) enabled = Boolean(data.enabled);
+                    if (data.showReviewBar !== undefined) showReviewBar = Boolean(data.showReviewBar);
+                    if (data.showFileNavigation !== undefined) showFileNav = Boolean(data.showFileNavigation);
+                    if (data.position !== undefined) position = String(data.position);
+                    if (data.autoHideWhenClean !== undefined) autoHideWhenClean = Boolean(data.autoHideWhenClean);
                 }
             }
         } catch {
             // Server may be starting up or idle, relying on DOM diff inspection
+        }
+
+        // Apply position styling dynamically
+        if (position === 'bottom-right') {
+            capsuleEl.style.left = 'auto';
+            capsuleEl.style.right = '24px';
+            capsuleEl.style.transform = 'none';
+        } else {
+            capsuleEl.style.left = '50%';
+            capsuleEl.style.right = 'auto';
+            capsuleEl.style.transform = 'translateX(-50%)';
         }
 
         if (textFiles) {
@@ -201,14 +223,16 @@
         }
 
         if (fileNavSection) {
-            if (totalCount <= 1) {
+            if (!showFileNav || totalCount <= 1) {
                 fileNavSection.classList.add('hidden');
             } else {
                 fileNavSection.classList.remove('hidden');
             }
         }
 
-        if (hasDiffs) {
+        const shouldShow = enabled && showReviewBar && (!autoHideWhenClean || hasDiffs);
+
+        if (shouldShow) {
             capsuleEl.classList.remove('hidden-bar');
             lastHasDiffs = true;
         } else {

@@ -101,12 +101,16 @@ export class FloatingReviewBar {
     public updateUi(): void {
         const config = vscode.workspace.getConfiguration('antigravityFloatingDiff');
         const enabled = config.get<boolean>('enabled', true);
-        const autoHide = config.get<boolean>('autoHideWhenClean', false);
+        const autoHide = config.get<boolean>('autoHideWhenClean', true);
+        const enableStatusBarFallback = config.get<boolean>('enableStatusBarFallback', true);
+        const position = config.get<string>('position', 'bottom-center');
+
+        const showStatusBar = enabled && (enableStatusBarFallback || position === 'status-bar');
 
         const modifiedCount = this._tracker.modifiedFiles.length;
         const currentIdx = modifiedCount > 0 ? this._tracker.activeFileIndex + 1 : 0;
 
-        if (!enabled || (autoHide && modifiedCount === 0)) {
+        if (!showStatusBar || (autoHide && modifiedCount === 0)) {
             this._statusBarContainer.forEach(item => item.hide());
             return;
         }

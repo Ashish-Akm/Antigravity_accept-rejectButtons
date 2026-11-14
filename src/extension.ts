@@ -29,6 +29,24 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
+    // Watch configuration changes
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeConfiguration(async (e) => {
+            if (e.affectsConfiguration('antigravityFloatingDiff.showDeletedLines')) {
+                const config = vscode.workspace.getConfiguration('antigravityFloatingDiff');
+                const showDeleted = config.get<boolean>('showDeletedLines', true);
+                if (showDeleted) {
+                    await WorkbenchInjector.enableInlineRedLines();
+                } else {
+                    await WorkbenchInjector.disableInlineRedLines();
+                }
+            }
+            if (e.affectsConfiguration('antigravityFloatingDiff')) {
+                floatingBar.updateUi();
+            }
+        })
+    );
+
     // Periodic refresh every 3 seconds to keep sync with Git & agent edits
     const interval = setInterval(() => {
         tracker.refresh();
