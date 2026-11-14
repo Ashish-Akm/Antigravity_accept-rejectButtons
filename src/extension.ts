@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { GitDiffTracker } from './gitTracker';
 import { FloatingReviewBar } from './floatingBar';
 import { WorkbenchInjector } from './injector';
+import { ProblemsSender } from './problemsSender';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as path from 'path';
@@ -265,6 +266,12 @@ export function activate(context: vscode.ExtensionContext) {
         );
     });
     context.subscriptions.push(testCmd);
+
+    // ── COMMAND: Send Problems to Agent (@current_problems) ──
+    const sendProblemsCmd = vscode.commands.registerCommand('antigravityFloatingDiff.sendProblemsToAgent', async () => {
+        await ProblemsSender.sendToAgent();
+    });
+    context.subscriptions.push(sendProblemsCmd);
 
     console.log('[Antigravity Floating Diff] Extension activated successfully.');
 }

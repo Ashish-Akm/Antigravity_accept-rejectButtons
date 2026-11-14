@@ -1,6 +1,7 @@
 import * as http from 'http';
 import * as vscode from 'vscode';
 import { GitDiffTracker } from './gitTracker';
+import { ProblemsSender } from './problemsSender';
 
 export interface FloatingBarState {
     hasDiffs: boolean;
@@ -150,6 +151,9 @@ export class FloatingBarServer {
                 } catch {
                     this._tracker.nextFile();
                 }
+                break;
+            case 'sendProblemsToAgent':
+                await ProblemsSender.sendToAgent();
                 break;
         }
     }

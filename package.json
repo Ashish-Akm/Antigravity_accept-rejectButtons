@@ -81,8 +81,22 @@
         "command": "antigravityFloatingDiff.testReviewBar",
         "title": "Test Review Bar Status & Diagnostics",
         "category": "Antigravity Diff"
+      },
+      {
+        "command": "antigravityFloatingDiff.sendProblemsToAgent",
+        "title": "Send to Agent (@current_problems)",
+        "category": "Antigravity Diff"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "antigravityFloatingDiff.sendProblemsToAgent",
+          "when": "view == workbench.panel.markers.view",
+          "group": "navigation"
+        }
+      ]
+    },
     "keybindings": [
       {
         "command": "antigravityFloatingDiff.acceptChanges",

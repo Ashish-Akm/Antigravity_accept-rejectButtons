@@ -1,4 +1,4 @@
-// Antigravity IDE - In-Editor Floating Review Capsule Bar
+// Antigravity IDE - In-Editor Floating Review Capsule Bar & Diagnostics Bridge
 // Docks directly into the active Monaco code editor viewport (above bottom terminal panel)
 // 100% Trusted Types safe - pure DOM creation without innerHTML
 
@@ -8,7 +8,7 @@
     }
     (window as any).__antigravityFloatingBarLoaded = true;
 
-    console.log('[Antigravity Floating Bar] Initializing floating capsule review bar...');
+    console.log('[Antigravity Floating Bar] Initializing floating capsule review bar & agent bridge...');
 
     const SERVER_URL = 'http://127.0.0.1:48765';
     const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -89,6 +89,15 @@
         .antigravity-capsule-root button.secondary:hover {
             background-color: rgba(255, 255, 255, 0.12) !important;
         }
+        .antigravity-capsule-root button.agent-send-btn {
+            background-color: rgba(56, 189, 248, 0.15) !important;
+            color: #38bdf8 !important;
+            border: 1px solid rgba(56, 189, 248, 0.35) !important;
+            font-weight: 500 !important;
+        }
+        .antigravity-capsule-root button.agent-send-btn:hover {
+            background-color: rgba(56, 189, 248, 0.28) !important;
+        }
         .antigravity-capsule-root .shortcut {
             opacity: 0.7 !important;
             font-size: 10px !important;
@@ -106,6 +115,8 @@
             align-items: center !important;
             gap: 4px !important;
             padding-left: 4px !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.16) !important;
+            padding-right: 6px !important;
         }
         .antigravity-capsule-root .file-nav-section.hidden {
             display: none !important;
@@ -115,6 +126,40 @@
             color: #9cdcfe !important;
             padding: 0 4px !important;
             white-space: nowrap !important;
+        }
+        .antigravity-capsule-root .agent-bridge-section {
+            display: flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            padding-left: 4px !important;
+        }
+
+        /* In-Problems Panel Send to Agent Button Styling */
+        .antigravity-panel-send-btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background-color: #0078d4 !important;
+            color: #ffffff !important;
+            font-family: inherit !important;
+            font-size: 11px !important;
+            font-weight: 500 !important;
+            padding: 2px 10px !important;
+            margin: 2px 6px !important;
+            border-radius: 4px !important;
+            border: 0 !important;
+            cursor: pointer !important;
+            user-select: none !important;
+            outline: none !important;
+            white-space: nowrap !important;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
+            transition: background-color 0.15s ease, transform 0.08s ease !important;
+        }
+        .antigravity-panel-send-btn:hover {
+            background-color: #106ebe !important;
+        }
+        .antigravity-panel-send-btn:active {
+            transform: scale(0.96) !important;
         }
     `;
     if (document.head) {
@@ -230,6 +275,20 @@
     fileNavSection.appendChild(btnNextFile);
     fileWithDiff.appendChild(fileNavSection);
 
+    // 4. Send to Agent Bridge Section (@current_problems)
+    const agentBridgeSection = document.createElement('div');
+    agentBridgeSection.className = 'agent-bridge-section';
+    agentBridgeSection.id = 'antigravity-agent-bridge';
+
+    const btnSendToAgent = document.createElement('button');
+    btnSendToAgent.className = 'agent-send-btn';
+    btnSendToAgent.id = 'antigravity-btn-send-agent';
+    btnSendToAgent.title = 'Send current workspace problems & errors directly to Agent Chat (@current_problems)';
+    btnSendToAgent.textContent = 'Send to Agent';
+
+    agentBridgeSection.appendChild(btnSendToAgent);
+    fileWithDiff.appendChild(agentBridgeSection);
+
     cascadeBar.appendChild(fileWithDiff);
     capsuleEl.appendChild(cascadeBar);
 
@@ -283,15 +342,16 @@
         }
     }
 
-    // Attach click listeners
-    btnAccept.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sendAction('accept'); });
-    btnReject.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sendAction('reject'); });
-    btnPrevHunk.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sendAction('previousHunk'); });
-    btnNextHunk.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sendAction('nextHunk'); });
-    btnPrevFile.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sendAction('previousFile'); });
-    btnNextFile.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); sendAction('nextFile'); });
+    // Attach click listeners with explicit MouseEvent types
+    btnAccept.addEventListener('click', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); sendAction('accept'); });
+    btnReject.addEventListener('click', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); sendAction('reject'); });
+    btnPrevHunk.addEventListener('click', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); sendAction('previousHunk'); });
+    btnNextHunk.addEventListener('click', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); sendAction('nextHunk'); });
+    btnPrevFile.addEventListener('click', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); sendAction('previousFile'); });
+    btnNextFile.addEventListener('click', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); sendAction('nextFile'); });
+    btnSendToAgent.addEventListener('click', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); sendAction('sendProblemsToAgent'); });
 
-    // Target container resolver
+    // Target container resolver for capsule bar
     function getMountTarget(): HTMLElement | null {
         // 1. Look for the active editor group container (sits directly above bottom terminal panel!)
         const activeGroup = document.querySelector('.monaco-workbench .part.editor .editor-group-container.active') as HTMLElement | null;
@@ -312,6 +372,39 @@
         }
 
         return document.body;
+    }
+
+    // Inject "Send to Agent" button directly into Problems Panel UI
+    function injectProblemsPanelButton() {
+        const markersPanel = document.querySelector('.monaco-workbench .part.panel .markers-panel') as HTMLElement | null;
+        if (!markersPanel) {
+            return;
+        }
+
+        if (document.getElementById('antigravity-problems-send-agent-btn')) {
+            return;
+        }
+
+        // Locate toolbar or filter area inside problems panel
+        const toolbar = markersPanel.querySelector('.monaco-toolbar .actions-container') || markersPanel.querySelector('.markers-panel-header') || markersPanel;
+
+        const panelBtn = document.createElement('button');
+        panelBtn.id = 'antigravity-problems-send-agent-btn';
+        panelBtn.className = 'antigravity-panel-send-btn';
+        panelBtn.title = 'Send all current problems & compilation errors to Agent Chat panel as @current_problems';
+        panelBtn.textContent = 'Send to Agent';
+
+        panelBtn.addEventListener('click', (e: MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            sendAction('sendProblemsToAgent');
+        });
+
+        if (toolbar.firstChild) {
+            toolbar.insertBefore(panelBtn, toolbar.firstChild);
+        } else {
+            toolbar.appendChild(panelBtn);
+        }
     }
 
     function checkDomDiffs(): boolean {
@@ -353,11 +446,14 @@
 
     // State polling & synchronization loop
     async function syncState() {
-        // Ensure mounted to current active editor container
+        // Ensure capsule mounted to current active editor container
         const mountTarget = getMountTarget();
         if (mountTarget && capsuleEl.parentElement !== mountTarget) {
             mountTarget.appendChild(capsuleEl);
         }
+
+        // Inject button into Problems Panel if panel is open
+        injectProblemsPanelButton();
 
         let hasDiffs = checkDomDiffs();
         let currentIdx = 1;
@@ -371,7 +467,7 @@
         try {
             const res = await fetch(`${SERVER_URL}/state`);
             if (res.ok) {
-                const data = await res.json();
+                const data: any = await res.json();
                 if (data.hasDiffs !== undefined) {
                     hasDiffs = hasDiffs || Boolean(data.hasDiffs);
                     currentIdx = data.currentFileIndex || 1;

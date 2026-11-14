@@ -120,4 +120,68 @@ export class GitDiffTracker {
             this._currentHunks = [];
         }
     }
+
+    public get activeFile(): string {
+        if (this._modifiedFiles.length === 0) return '';
+        const active = this._modifiedFiles[this._activeFileIndex];
+        return active ? active.relativePath : '';
+    }
+
+    public async acceptCurrentFile(): Promise<void> {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) return;
+        const rootPath = workspaceFolders[0].uri.fsPath;
+        const current = this.activeFile;
+        if (!current) return;
+
+        try {
+            await execAsync(`git add -- "${current}"`, { cwd: rootPath });
+            await this.refresh();
+        } catch (err) {
+            console.error('Failed to accept/stage file:', err);
+        }
+    }
+
+    public async rejectCurrentFile(): Promise<void> {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) return;
+        const rootPath = workspaceFolders[0].uri.fsPath;
+        const current = this.activeFile;
+        if (!current) return;
+
+        try {
+            await execAsync(`git restore -- "${current}" 2>/dev/null || git checkout -- "${current}"`, { cwd: rootPath });
+            await this.refresh();
+        } catch (err) {
+            console.error('Failed to reject/restore file:', err);
+        }
+    }
+
+    public previousHunk(): void {
+        vscode.commands.executeCommand('workbench.action.editor.previousChange').then(undefined, () => {});
+    }
+
+    public nextHunk(): void {
+        vscode.commands.executeCommand('workbench.action.editor.nextChange').then(undefined, () => {});
+    }
+
+    public async previousFile(): Promise<void> {
+        if (this._modifiedFiles.length <= 1) return;
+        this._activeFileIndex = (this._activeFileIndex - 1 + this._modifiedFiles.length) % this._modifiedFiles.length;
+        const target = this._modifiedFiles[this._activeFileIndex];
+        if (target) {
+            const doc = await vscode.workspace.openTextDocument(target.uri);
+            await vscode.window.showTextDocument(doc);
+        }
+    }
+
+    public async nextFile(): Promise<void> {
+        if (this._modifiedFiles.length <= 1) return;
+        this._activeFileIndex = (this._activeFileIndex + 1) % this._modifiedFiles.length;
+        const target = this._modifiedFiles[this._activeFileIndex];
+        if (target) {
+            const doc = await vscode.workspace.openTextDocument(target.uri);
+            await vscode.window.showTextDocument(doc);
+        }
+    }
 }
