@@ -152,7 +152,7 @@
                 "antigravityFloatingDiff.preventHidingDeletedLines": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Automatically pause files.autoSave during active code reviews to prevent inline red deleted lines from being collapsed or hidden."
+                    "description": "Ensure AutoSave does not strip or hide inline red deleted lines during active code reviews."
                 },
                 "antigravityFloatingDiff.position": {
                     "type": "string",

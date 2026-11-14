@@ -8,6 +8,9 @@ export class WorkbenchInjector {
     private static HIDE_LINES_TARGET = 'hideDeletedLines:xa=>n.workspace.getConfiguration("files",xa).get("autoSave","off")!=="off"';
     private static HIDE_LINES_REPLACEMENT = 'hideDeletedLines:xa=>!1';
 
+    private static AUTOSAVE_STRIP_TARGET = 'if(a.reason!=null&&a.reason!==n.TextDocumentSaveReason.Manual){let p=c.deletionsHidden?void 0:PQ(d,c.changes.ranges);c.pendingHideText=p==null?void 0:p.text;';
+    private static AUTOSAVE_STRIP_REPLACEMENT = 'if(!1&&a.reason!=null&&a.reason!==n.TextDocumentSaveReason.Manual){let p=c.deletionsHidden?void 0:PQ(d,c.changes.ranges);c.pendingHideText=p==null?void 0:p.text;';
+
     private static getWorkbenchPaths(): { htmlPath: string; scriptDestPath: string; dirPath: string; agyExtPath: string } | null {
         try {
             const appRoot = vscode.env.appRoot;
@@ -54,15 +57,26 @@ export class WorkbenchInjector {
 
         try {
             let content = fs.readFileSync(paths.agyExtPath, 'utf8');
+            let modified = false;
+
+            // Backup before editing
+            const backupPath = `${paths.agyExtPath}.antigravity-bak`;
+            if (!fs.existsSync(backupPath)) {
+                fs.writeFileSync(backupPath, content, 'utf8');
+            }
+
             if (content.includes(WorkbenchInjector.HIDE_LINES_TARGET)) {
-                // Backup before editing
-                const backupPath = `${paths.agyExtPath}.antigravity-bak`;
-                if (!fs.existsSync(backupPath)) {
-                    fs.writeFileSync(backupPath, content, 'utf8');
-                }
                 content = content.replace(WorkbenchInjector.HIDE_LINES_TARGET, WorkbenchInjector.HIDE_LINES_REPLACEMENT);
+                modified = true;
+            }
+
+            if (content.includes(WorkbenchInjector.AUTOSAVE_STRIP_TARGET)) {
+                content = content.replace(WorkbenchInjector.AUTOSAVE_STRIP_TARGET, WorkbenchInjector.AUTOSAVE_STRIP_REPLACEMENT);
+                modified = true;
+            }
+
+            if (modified) {
                 fs.writeFileSync(paths.agyExtPath, content, 'utf8');
-                return true;
             }
             return true;
         } catch (err: any) {
@@ -79,10 +93,20 @@ export class WorkbenchInjector {
 
         try {
             let content = fs.readFileSync(paths.agyExtPath, 'utf8');
+            let modified = false;
+
             if (content.includes(WorkbenchInjector.HIDE_LINES_REPLACEMENT)) {
                 content = content.replace(WorkbenchInjector.HIDE_LINES_REPLACEMENT, WorkbenchInjector.HIDE_LINES_TARGET);
+                modified = true;
+            }
+
+            if (content.includes(WorkbenchInjector.AUTOSAVE_STRIP_REPLACEMENT)) {
+                content = content.replace(WorkbenchInjector.AUTOSAVE_STRIP_REPLACEMENT, WorkbenchInjector.AUTOSAVE_STRIP_TARGET);
+                modified = true;
+            }
+
+            if (modified) {
                 fs.writeFileSync(paths.agyExtPath, content, 'utf8');
-                return true;
             }
             return true;
         } catch (err: any) {
